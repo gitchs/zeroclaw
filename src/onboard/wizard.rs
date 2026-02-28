@@ -4479,6 +4479,7 @@ fn setup_channels() -> Result<ChannelsConfig> {
                     } else {
                         Some(channel)
                     },
+                    channel_ids: vec![],
                     allowed_users,
                     group_reply: None,
                 });
