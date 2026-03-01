@@ -53,8 +53,8 @@ jobs:
         runs-on: [self-hosted, aws-india, Linux]
         timeout-minutes: 40
         env:
-            CARGO_HOME: ${{ runner.temp }}/cargo-home
-            RUSTUP_HOME: ${{ runner.temp }}/rustup-home
+            CARGO_HOME: /tmp/zeroclaw-cargo-${{ github.run_id }}-${{ github.job }}
+            RUSTUP_HOME: /tmp/zeroclaw-rustup-${{ github.run_id }}-${{ github.job }}
         steps:
             - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
               with:
@@ -82,8 +82,8 @@ jobs:
         runs-on: [self-hosted, aws-india, Linux]
         timeout-minutes: 60
         env:
-            CARGO_HOME: ${{ runner.temp }}/cargo-home
-            RUSTUP_HOME: ${{ runner.temp }}/rustup-home
+            CARGO_HOME: /tmp/zeroclaw-cargo-${{ github.run_id }}-${{ github.job }}
+            RUSTUP_HOME: /tmp/zeroclaw-rustup-${{ github.run_id }}-${{ github.job }}
         steps:
             - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
             - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
@@ -150,8 +150,8 @@ jobs:
         runs-on: [self-hosted, aws-india, Linux]
         timeout-minutes: 35
         env:
-            CARGO_HOME: ${{ runner.temp }}/cargo-home
-            RUSTUP_HOME: ${{ runner.temp }}/rustup-home
+            CARGO_HOME: /tmp/zeroclaw-cargo-${{ github.run_id }}-${{ github.job }}
+            RUSTUP_HOME: /tmp/zeroclaw-rustup-${{ github.run_id }}-${{ github.job }}
 
         steps:
             - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
