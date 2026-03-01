@@ -195,7 +195,9 @@ fn parse_category_filter(input: &str) -> Result<IntegrationCategory> {
 
     match normalized.as_str() {
         "chat" | "chatproviders" | "messaging" => Ok(IntegrationCategory::Chat),
-        "ai" | "aimodels" | "aimodel" | "models" | "llm" | "llms" => Ok(IntegrationCategory::AiModel),
+        "ai" | "aimodels" | "aimodel" | "models" | "llm" | "llms" => {
+            Ok(IntegrationCategory::AiModel)
+        }
         "productivity" | "prod" => Ok(IntegrationCategory::Productivity),
         "music" | "musicaudio" | "audio" => Ok(IntegrationCategory::MusicAudio),
         "smarthome" | "home" | "iot" => Ok(IntegrationCategory::SmartHome),
@@ -205,8 +207,15 @@ fn parse_category_filter(input: &str) -> Result<IntegrationCategory> {
         "platforms" | "platform" => Ok(IntegrationCategory::Platform),
         _ => {
             let valid = [
-                "chat", "ai", "productivity", "music", "smart-home",
-                "tools", "media", "social", "platforms",
+                "chat",
+                "ai",
+                "productivity",
+                "music",
+                "smart-home",
+                "tools",
+                "media",
+                "social",
+                "platforms",
             ];
             anyhow::bail!(
                 "Unknown category: '{}'. Valid options: {}",
@@ -246,9 +255,7 @@ fn list_integrations(
     let category_match = category_filter
         .map(|c| parse_category_filter(c))
         .transpose()?;
-    let status_match = status_filter
-        .map(|s| parse_status_filter(s))
-        .transpose()?;
+    let status_match = status_filter.map(|s| parse_status_filter(s)).transpose()?;
 
     // Group entries by category
     let mut categories: std::collections::BTreeMap<IntegrationCategory, Vec<&IntegrationEntry>> =
@@ -284,10 +291,7 @@ fn list_integrations(
     }
 
     for (category, cat_entries) in categories {
-        println!(
-            "  {}",
-            console::style(category.label()).cyan().bold()
-        );
+        println!("  {}", console::style(category.label()).cyan().bold());
 
         for entry in cat_entries {
             let status = (entry.status_fn)(config);
@@ -328,9 +332,7 @@ fn search_integrations(
     let category_match = category_filter
         .map(|c| parse_category_filter(c))
         .transpose()?;
-    let status_match = status_filter
-        .map(|s| parse_status_filter(s))
-        .transpose()?;
+    let status_match = status_filter.map(|s| parse_status_filter(s)).transpose()?;
 
     let mut results: Vec<&IntegrationEntry> = entries
         .iter()
@@ -374,7 +376,9 @@ fn search_integrations(
     if results.is_empty() {
         println!("  No integrations found matching your query.");
         println!();
-        println!("  Try a different search term or run `zeroclaw integrations list` to see all options.");
+        println!(
+            "  Try a different search term or run `zeroclaw integrations list` to see all options."
+        );
         println!();
         return Ok(());
     }
