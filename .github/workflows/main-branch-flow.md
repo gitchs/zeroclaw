@@ -204,16 +204,15 @@ Canary policy lane:
 
 1. Workflow-file changes (`.github/workflows/**`) activate owner-approval gate in `ci-run.yml`.
 2. PR lint/test strictness is intentionally controlled by `ci:full` label.
-3. `pr-intake-checks.yml` now blocks PRs missing a Linear issue key (`RMN-*`, `CDV-*`, `COM-*`) to keep execution mapped to Linear.
-4. `sec-audit.yml` runs on PR/push/merge queue (`merge_group`), plus scheduled weekly.
-5. `ci-change-audit.yml` enforces pinned `uses:` references for CI/security workflow changes.
-6. `sec-audit.yml` includes deny policy hygiene checks (`deny_policy_guard.py`) before cargo-deny.
-7. `sec-audit.yml` includes gitleaks allowlist governance checks (`secrets_governance_guard.py`) against `.github/security/gitleaks-allowlist-governance.json`.
-8. `ci-reproducible-build.yml` and `ci-supply-chain-provenance.yml` provide scheduled supply-chain assurance signals outside release-only windows.
-9. Some workflows are operational and non-merge-path (`pr-check-stale`, `pr-check-status`, `sync-contributors`, etc.).
-10. Workflow-specific JavaScript helpers are organized under `.github/workflows/scripts/`.
-11. `ci-run.yml` includes cache partitioning (`prefix-key`) across lint/test/build/flake-probe lanes to reduce cache contention.
-12. `ci-rollback.yml` provides a guarded rollback planning lane (scheduled dry-run + manual execute controls) with audit artifacts.
+3. `sec-audit.yml` runs on PR/push/merge queue (`merge_group`), plus scheduled weekly.
+4. `ci-change-audit.yml` enforces pinned `uses:` references for CI/security workflow changes.
+5. `sec-audit.yml` includes deny policy hygiene checks (`deny_policy_guard.py`) before cargo-deny.
+6. `sec-audit.yml` includes gitleaks allowlist governance checks (`secrets_governance_guard.py`) against `.github/security/gitleaks-allowlist-governance.json`.
+7. `ci-reproducible-build.yml` and `ci-supply-chain-provenance.yml` provide scheduled supply-chain assurance signals outside release-only windows.
+8. Some workflows are operational and non-merge-path (`pr-check-stale`, `pr-check-status`, `sync-contributors`, etc.).
+9. Workflow-specific JavaScript helpers are organized under `.github/workflows/scripts/`.
+10. `ci-run.yml` includes cache partitioning (`prefix-key`) across lint/test/build/flake-probe lanes to reduce cache contention.
+11. `ci-rollback.yml` provides a guarded rollback planning lane (scheduled dry-run + manual execute controls) with audit artifacts.
 
 ## Mermaid Diagrams
 

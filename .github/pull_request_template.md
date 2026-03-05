@@ -29,8 +29,6 @@ Describe this PR in 2-5 bullets:
 - Depends on # (if stacked)
 - Existing overlapping PR(s) reviewed for this issue (list `#<pr> by @<author>` or `N/A`):
 - Supersedes # (if replacing older PR)
-- Linear issue key(s) (required, e.g. `RMN-123`):
-- Linear issue URL(s):
 
 ## Supersede Attribution (required when `Supersedes #` is used)
 
