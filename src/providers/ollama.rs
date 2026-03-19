@@ -6,8 +6,6 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::debug;
-
 pub struct OllamaProvider {
     base_url: String,
     api_key: Option<String>,
