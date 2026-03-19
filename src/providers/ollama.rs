@@ -6,11 +6,11 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
 pub struct OllamaProvider {
     base_url: String,
     api_key: Option<String>,
     reasoning_enabled: Option<bool>,
+    num_ctx: Option<u32>,
 }
 
 // ─── Request Structures ───────────────────────────────────────────────────────
@@ -56,6 +56,8 @@ struct OutgoingFunction {
 #[derive(Debug, Serialize)]
 struct Options {
     temperature: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    num_ctx: Option<u32>,
 }
 
 // ─── Response Structures ──────────────────────────────────────────────────────
@@ -143,6 +145,7 @@ impl OllamaProvider {
             base_url: Self::normalize_base_url(base_url.unwrap_or("http://localhost:11434")),
             api_key,
             reasoning_enabled,
+            num_ctx: Some(32 * 1024),
         }
     }
 
@@ -291,14 +294,17 @@ impl OllamaProvider {
         model: &str,
         temperature: f64,
         tools: Option<&[serde_json::Value]>,
-        think: Option<bool>,
+        _think: Option<bool>,
     ) -> ChatRequest {
         ChatRequest {
             model: model.to_string(),
             messages,
             stream: false,
-            options: Options { temperature },
-            think,
+            options: Options {
+                temperature,
+                num_ctx: self.num_ctx,
+            },
+            think: self.reasoning_enabled,
             tools: tools.map(|t| t.to_vec()),
         }
     }

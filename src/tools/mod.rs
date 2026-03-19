@@ -78,6 +78,7 @@ pub mod traits;
 pub mod web_fetch;
 pub mod web_search_tool;
 pub mod workspace_tool;
+pub mod datasync_tool;
 
 pub use backup_tool::BackupTool;
 pub use browser::{BrowserTool, ComputerUseConfig};
@@ -142,6 +143,7 @@ pub use traits::{ToolResult, ToolSpec};
 pub use web_fetch::WebFetchTool;
 pub use web_search_tool::WebSearchTool;
 pub use workspace_tool::WorkspaceTool;
+pub use datasync_tool::DataSyncTool;
 
 use crate::config::{Config, DelegateAgentConfig};
 use crate::memory::Memory;
@@ -282,39 +284,53 @@ pub fn all_tools_with_runtime(
     fallback_api_key: Option<&str>,
     root_config: &crate::config::Config,
 ) -> (Vec<Box<dyn Tool>>, Option<DelegateParentToolsHandle>) {
+    let slim_mode = "" != std::env::var("ZEROCLAW_SLIM_MODE").unwrap_or_default();
     let has_shell_access = runtime.has_shell_access();
-    let mut tool_arcs: Vec<Arc<dyn Tool>> = vec![
-        Arc::new(ShellTool::new(security.clone(), runtime)),
-        Arc::new(FileReadTool::new(security.clone())),
-        Arc::new(FileWriteTool::new(security.clone())),
-        Arc::new(FileEditTool::new(security.clone())),
-        Arc::new(GlobSearchTool::new(security.clone())),
-        Arc::new(ContentSearchTool::new(security.clone())),
-        Arc::new(CronAddTool::new(config.clone(), security.clone())),
-        Arc::new(CronListTool::new(config.clone())),
-        Arc::new(CronRemoveTool::new(config.clone(), security.clone())),
-        Arc::new(CronUpdateTool::new(config.clone(), security.clone())),
-        Arc::new(CronRunTool::new(config.clone(), security.clone())),
-        Arc::new(CronRunsTool::new(config.clone())),
-        Arc::new(MemoryStoreTool::new(memory.clone(), security.clone())),
-        Arc::new(MemoryRecallTool::new(memory.clone())),
-        Arc::new(MemoryForgetTool::new(memory, security.clone())),
-        Arc::new(ScheduleTool::new(security.clone(), root_config.clone())),
-        Arc::new(ModelRoutingConfigTool::new(
-            config.clone(),
-            security.clone(),
-        )),
-        Arc::new(ModelSwitchTool::new(security.clone())),
-        Arc::new(ProxyConfigTool::new(config.clone(), security.clone())),
-        Arc::new(GitOperationsTool::new(
-            security.clone(),
-            workspace_dir.to_path_buf(),
-        )),
-        Arc::new(PushoverTool::new(
-            security.clone(),
-            workspace_dir.to_path_buf(),
-        )),
-    ];
+    let mut tool_arcs: Vec<Arc<dyn Tool>> = if !slim_mode {
+        vec![
+            Arc::new(ShellTool::new(security.clone(), runtime)),
+            Arc::new(FileReadTool::new(security.clone())),
+            Arc::new(FileWriteTool::new(security.clone())),
+            Arc::new(FileEditTool::new(security.clone())),
+            Arc::new(GlobSearchTool::new(security.clone())),
+            Arc::new(ContentSearchTool::new(security.clone())),
+            Arc::new(CronAddTool::new(config.clone(), security.clone())),
+            Arc::new(CronListTool::new(config.clone())),
+            Arc::new(CronRemoveTool::new(config.clone(), security.clone())),
+            Arc::new(CronUpdateTool::new(config.clone(), security.clone())),
+            Arc::new(CronRunTool::new(config.clone(), security.clone())),
+            Arc::new(CronRunsTool::new(config.clone())),
+            Arc::new(MemoryStoreTool::new(memory.clone(), security.clone())),
+            Arc::new(MemoryRecallTool::new(memory.clone())),
+            Arc::new(MemoryForgetTool::new(memory, security.clone())),
+            Arc::new(ScheduleTool::new(security.clone(), root_config.clone())),
+            Arc::new(ModelRoutingConfigTool::new(
+                config.clone(),
+                security.clone(),
+            )),
+            Arc::new(ModelSwitchTool::new(security.clone())),
+            Arc::new(ProxyConfigTool::new(config.clone(), security.clone())),
+            Arc::new(GitOperationsTool::new(
+                security.clone(),
+                workspace_dir.to_path_buf(),
+            )),
+            Arc::new(PushoverTool::new(
+                security.clone(),
+                workspace_dir.to_path_buf(),
+            )),
+        ]
+    } else {
+        vec![
+            Arc::new(MemoryStoreTool::new(memory.clone(), security.clone())),
+            Arc::new(MemoryRecallTool::new(memory.clone())),
+            Arc::new(MemoryForgetTool::new(memory, security.clone())),
+        ]
+    };
+
+    if let Some(tool) = DataSyncTool::new() {
+        tool_arcs.push(Arc::new(tool));
+    }
+
 
     if browser_config.enabled {
         // Add legacy browser_open tool for simple URL opening
@@ -460,12 +476,14 @@ pub fn all_tools_with_runtime(
         );
     }
 
-    // PDF extraction (feature-gated at compile time via rag-pdf)
-    tool_arcs.push(Arc::new(PdfReadTool::new(security.clone())));
+    if !slim_mode {
+        // PDF extraction (feature-gated at compile time via rag-pdf)
+        tool_arcs.push(Arc::new(PdfReadTool::new(security.clone())));
 
-    // Vision tools are always available
-    tool_arcs.push(Arc::new(ScreenshotTool::new(security.clone())));
-    tool_arcs.push(Arc::new(ImageInfoTool::new(security.clone())));
+        // Vision tools are always available
+        tool_arcs.push(Arc::new(ScreenshotTool::new(security.clone())));
+        tool_arcs.push(Arc::new(ImageInfoTool::new(security.clone())));
+    }
 
     // LinkedIn integration (config-gated)
     if root_config.linkedin.enabled {
