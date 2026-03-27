@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/robot-kit"]
+members = [".", "crates/robot-kit", "crates/tacnode_rs"]
 resolver = "2"
 
 [package]
@@ -178,7 +178,7 @@ opentelemetry-otlp = { version = "0.31", default-features = false, features = ["
 
 # Serial port for peripheral communication (STM32, etc.)
 tokio-serial = { version = "5", default-features = false, optional = true }
-tacnode = { git = "ssh://git@github.com/gitchs/tacnode_rs.git", rev = "ac41d58f5b5b4c591ddae116e14f533fdd151dd7" }
+tacnode = { path = "crates/tacnode_rs" }
 
 # USB device enumeration (hardware discovery) — only on platforms nusb supports
 # (Linux, macOS, Windows). Android/Termux uses target_os="android" and is excluded.

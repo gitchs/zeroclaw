@@ -2,6 +2,7 @@ use crate::multimodal;
 use crate::providers::traits::{
     ChatMessage, ChatResponse, Provider, ProviderCapabilities, TokenUsage, ToolCall,
 };
+use tracing::debug;
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -225,6 +226,7 @@ impl OllamaProvider {
     /// stripping.  This ensures that tool-call XML tags embedded alongside (or
     /// after) thinking blocks are preserved for downstream parsing.
     fn effective_content(content: &str, thinking: Option<&str>) -> Option<String> {
+        debug!("effective_content content = {}, thinking = {:?}", content, thinking);
         // First try the content field with think tags stripped.
         let stripped = Self::strip_think_tags(content);
         if !stripped.trim().is_empty() {

@@ -78,7 +78,7 @@ pub mod traits;
 pub mod web_fetch;
 pub mod web_search_tool;
 pub mod workspace_tool;
-pub mod datasync_tool;
+pub mod tacnode;
 
 pub use backup_tool::BackupTool;
 pub use browser::{BrowserTool, ComputerUseConfig};
@@ -143,7 +143,8 @@ pub use traits::{ToolResult, ToolSpec};
 pub use web_fetch::WebFetchTool;
 pub use web_search_tool::WebSearchTool;
 pub use workspace_tool::WorkspaceTool;
-pub use datasync_tool::DataSyncTool;
+pub use tacnode::datasync_tool::DataSyncTool;
+pub use tacnode::guc_tool::GUCTool;
 
 use crate::config::{Config, DelegateAgentConfig};
 use crate::memory::Memory;
@@ -153,6 +154,7 @@ use async_trait::async_trait;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
+use tracing::debug;
 
 /// Shared handle to the delegate tool's parent-tools list.
 /// Callers can push additional tools (e.g. MCP wrappers) after construction.
@@ -318,12 +320,15 @@ pub fn all_tools_with_runtime(
                 security.clone(),
                 workspace_dir.to_path_buf(),
             )),
+            Arc::new(GUCTool::new()),
         ]
     } else {
+        debug!("enable slim mode");
         vec![
             Arc::new(MemoryStoreTool::new(memory.clone(), security.clone())),
             Arc::new(MemoryRecallTool::new(memory.clone())),
             Arc::new(MemoryForgetTool::new(memory, security.clone())),
+            Arc::new(GUCTool::new()),
         ]
     };
 

@@ -1,0 +1,24 @@
+[package]
+name = "tacnode"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+url = "2.5.8"
+serde_json = "^1.0"
+tokio = "1.42"
+reqwest = { version = "^0.13", features = ["json"] }
+serde = { version = "^1.0", features = ["derive"] }
+anyhow = "^1.0"
+tracing = "^0.1"
+tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
+chrono = "^0.4"
+futures = "^0.3"
+log = "0.4.29"
+ini = "=1.3"
+urlencoding = "2.1"
+serde_derive = "1.0.228"
+
+[dev-dependencies]
+tokio = { version = "^1.42", features = ["rt", "macros"] }

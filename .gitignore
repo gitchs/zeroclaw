@@ -49,3 +49,4 @@ lcov.info
 
 # Wrangler cache
 .wrangler/
+envs.sh

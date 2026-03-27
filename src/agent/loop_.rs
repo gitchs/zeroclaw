@@ -21,6 +21,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 use tokio_util::sync::CancellationToken;
+use tracing::debug;
 use uuid::Uuid;
 
 /// Minimum characters per chunk when relaying LLM text to a streaming draft.
@@ -732,6 +733,7 @@ fn extract_xml_pairs(input: &str) -> Vec<(&str, &str)> {
 /// - `<memory_recall><query>...</query></memory_recall>`
 /// - `<shell>{"command":"pwd"}</shell>`
 fn parse_xml_tool_calls(xml_content: &str) -> Option<Vec<ParsedToolCall>> {
+    debug!("xml_content content = {}", xml_content);
     let mut calls = Vec::new();
     let trimmed = xml_content.trim();
 
@@ -1327,6 +1329,49 @@ fn parse_glm_style_tool_calls(text: &str) -> Vec<(String, serde_json::Value, Opt
     calls
 }
 
+
+fn parse_qwen_hermes_style_tool_calls(text: &str) -> Vec<ParsedToolCall> {
+    let mut calls = Vec::new();
+
+    let name_start = match text.find("<function=") {
+        Some(i) => i + "<function=".len(),
+        None => return calls,
+    };
+    let name_end = match text[name_start..].find('>') {
+        Some(i) => i + name_start,
+        None => return calls,
+    };
+    let name = text[name_start..name_end].trim().to_string();
+
+    let mut args = serde_json::Map::new();
+    let mut remaining = &text[name_end..];
+    while let Some(param_start) = remaining.find("<parameter=") {
+        let key_start = param_start + "<parameter=".len();
+        let key_end = match remaining[key_start..].find('>') {
+            Some(i) => i + key_start,
+            None => break,
+        };
+        let key = remaining[key_start..key_end].trim().to_string();
+
+        let value_start = key_end + 1;
+        let value_end = match remaining[value_start..].find("</parameter>") {
+            Some(i) => i + value_start,
+            None => break,
+        };
+        let value = remaining[value_start..value_end].trim().to_string();
+
+        args.insert(key, serde_json::Value::String(value));
+        remaining = &remaining[value_end + "</parameter>".len()..];
+    }
+
+    calls.push(ParsedToolCall {
+        name,
+        arguments: serde_json::Value::Object(args),
+        tool_call_id: None,
+    });
+    calls
+}
+
 /// Return the canonical default parameter name for a tool.
 ///
 /// When a model emits a shortened call like `shell>uname -a` (without an
@@ -1604,6 +1649,13 @@ fn parse_tool_calls(response: &str) -> (String, Vec<ParsedToolCall>) {
                     parsed_any = true;
                 }
             }
+            if !parsed_any {
+                let qwen_calls = parse_qwen_hermes_style_tool_calls(inner);
+                if !qwen_calls.is_empty() {
+                    calls.push(qwen_calls[0].clone());
+                    parsed_any = true;
+                }
+            }
 
             if !parsed_any {
                 tracing::warn!(
@@ -1855,6 +1907,17 @@ fn parse_tool_calls(response: &str) -> (String, Vec<ParsedToolCall>) {
     // </FunctionCall>
     if calls.is_empty() {
         let func_calls = parse_function_call_tool_calls(remaining);
+        let func_calls = if func_calls.is_empty() {
+            // parse qwen Hermes style, for example
+            // <function=tacnode_guc_tool>
+            // <parameter=action>
+            // list-guc
+            // </parameter>
+            // </function>
+            parse_qwen_hermes_style_tool_calls(remaining)
+        } else {
+            func_calls
+        };
         if !func_calls.is_empty() {
             let mut cleaned_text = remaining.to_string();
             for call in func_calls {
@@ -1900,6 +1963,7 @@ fn parse_tool_calls(response: &str) -> (String, Vec<ParsedToolCall>) {
             remaining = "";
         }
     }
+
 
     // SECURITY: We do NOT fall back to extracting arbitrary JSON from the response
     // here. That would enable prompt injection attacks where malicious content
