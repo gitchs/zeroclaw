@@ -15,6 +15,7 @@
 //! To add a new tool, implement [`Tool`] in a new submodule and register it in
 //! [`all_tools_with_runtime`]. See `AGENTS.md` §7.3 for the full change playbook.
 
+mod aria2rpc_tool;
 pub mod backup_tool;
 pub mod browser;
 pub mod browser_delegate;
@@ -73,12 +74,12 @@ pub mod screenshot;
 pub mod security_ops;
 pub mod shell;
 pub mod swarm;
+pub mod tacnode;
 pub mod tool_search;
 pub mod traits;
 pub mod web_fetch;
 pub mod web_search_tool;
 pub mod workspace_tool;
-pub mod tacnode;
 
 pub use backup_tool::BackupTool;
 pub use browser::{BrowserTool, ComputerUseConfig};
@@ -136,6 +137,8 @@ pub use screenshot::ScreenshotTool;
 pub use security_ops::SecurityOpsTool;
 pub use shell::ShellTool;
 pub use swarm::SwarmTool;
+pub use tacnode::datasync_tool::DataSyncTool;
+pub use tacnode::guc_tool::GUCTool;
 pub use tool_search::ToolSearchTool;
 pub use traits::Tool;
 #[allow(unused_imports)]
@@ -143,13 +146,12 @@ pub use traits::{ToolResult, ToolSpec};
 pub use web_fetch::WebFetchTool;
 pub use web_search_tool::WebSearchTool;
 pub use workspace_tool::WorkspaceTool;
-pub use tacnode::datasync_tool::DataSyncTool;
-pub use tacnode::guc_tool::GUCTool;
 
 use crate::config::{Config, DelegateAgentConfig};
 use crate::memory::Memory;
 use crate::runtime::{NativeRuntime, RuntimeAdapter};
 use crate::security::SecurityPolicy;
+use crate::tools::aria2rpc_tool::Aria2RPCTool;
 use async_trait::async_trait;
 use parking_lot::RwLock;
 use std::collections::HashMap;
@@ -335,7 +337,9 @@ pub fn all_tools_with_runtime(
     if let Some(tool) = DataSyncTool::new() {
         tool_arcs.push(Arc::new(tool));
     }
-
+    if let Some(tool) = Aria2RPCTool::new() {
+        tool_arcs.push(Arc::new(tool));
+    }
 
     if browser_config.enabled {
         // Add legacy browser_open tool for simple URL opening

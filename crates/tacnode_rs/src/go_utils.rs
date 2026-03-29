@@ -23,10 +23,12 @@ pub fn format_duration(ms: u64) -> String {
     if ms > 0 {
         parts.push(format!("{}ms", ms));
     }
-    debug!("hour = {}, minute = {}, second = {}, ms = {}", hours, minutes, seconds, ms);
+    debug!(
+        "hour = {}, minute = {}, second = {}, ms = {}",
+        hours, minutes, seconds, ms
+    );
     parts.join("")
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -50,5 +52,4 @@ mod tests {
         let duration = format_duration(4205030);
         assert_eq!(duration, "1h10m5s30ms".to_string());
     }
-
 }

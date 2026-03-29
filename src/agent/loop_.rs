@@ -1329,7 +1329,6 @@ fn parse_glm_style_tool_calls(text: &str) -> Vec<(String, serde_json::Value, Opt
     calls
 }
 
-
 fn parse_qwen_hermes_style_tool_calls(text: &str) -> Vec<ParsedToolCall> {
     let mut calls = Vec::new();
 
@@ -1963,7 +1962,6 @@ fn parse_tool_calls(response: &str) -> (String, Vec<ParsedToolCall>) {
             remaining = "";
         }
     }
-
 
     // SECURITY: We do NOT fall back to extracting arbitrary JSON from the response
     // here. That would enable prompt injection attacks where malicious content

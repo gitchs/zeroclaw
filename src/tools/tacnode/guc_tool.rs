@@ -1,13 +1,12 @@
+use super::super::{Tool, ToolResult};
 use anyhow::bail;
 use async_trait::async_trait;
+use serde_json::json;
 use serde_json::Value;
-use super::super::{{Tool, ToolResult}};
-use serde_json::{json};
 use tacnode::guc::{HiddenCatalog, HiddenGrammar, QueryHistory, TacnodeGUC, UseQuickOptimizerMode};
 use tracing::debug;
 
 pub struct GUCTool {}
-
 
 impl GUCTool {
     pub fn new() -> Self {
@@ -25,7 +24,7 @@ impl GUCTool {
         });
         let output = serde_yaml::to_string(&wrapper)?;
         debug!("guc list = {}", &output);
-        Ok(ToolResult{
+        Ok(ToolResult {
             success: true,
             output,
             error: None,
@@ -34,16 +33,19 @@ impl GUCTool {
 
     fn generate(&self, args: Value) -> anyhow::Result<ToolResult> {
         let name = args.get("name").unwrap().as_str().unwrap();
-       let guc = tacnode::guc::tacnode_guc_factory(name, &args)?;
-        let dbname = args.get("dbname").unwrap_or_default().as_str().unwrap_or_default();
+        let guc = tacnode::guc::tacnode_guc_factory(name, &args)?;
+        let dbname = args
+            .get("dbname")
+            .unwrap_or_default()
+            .as_str()
+            .unwrap_or_default();
         let output = guc.generate(dbname)?;
-        Ok(ToolResult{
+        Ok(ToolResult {
             success: true,
             output,
             error: None,
         })
     }
-
 
     fn describe_guc(&self, args: Value) -> anyhow::Result<ToolResult> {
         let name = args.get("name").unwrap().as_str().unwrap();
@@ -52,15 +54,14 @@ impl GUCTool {
             "experimental_show_hidden_catalog" => HiddenCatalog::default().long(),
             "experimental_enable_hidden_grammar" => HiddenGrammar::default().long(),
             "experimental_use_quick_optimizer_mode" => UseQuickOptimizerMode::default().long(),
-            _ => anyhow::bail!("unknown GUC {}, call action list-guc first", name)
+            _ => anyhow::bail!("unknown GUC {}, call action list-guc first", name),
         };
-        Ok(ToolResult{
+        Ok(ToolResult {
             success: true,
             output: description.to_string(),
             error: None,
         })
     }
-
 }
 
 #[async_trait]
@@ -113,7 +114,7 @@ Actions:
             "list-guc" => self.list_guc(args),
             "describe-guc" => self.describe_guc(args),
             "generate" => self.generate(args),
-            _ => bail!(format!("unknown action {}", action))
+            _ => bail!(format!("unknown action {}", action)),
         };
         debug!("tacnode::guc::execute: {:#?}", retval);
         retval

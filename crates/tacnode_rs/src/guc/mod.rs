@@ -1,13 +1,11 @@
 pub mod pg_utils;
 
-use anyhow::bail;
 use crate::go_utils;
+use anyhow::bail;
 use pg_utils::{quote_ident, quote_literal};
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use serde_json::Value;
-
-
 
 pub trait TacnodeGUC {
     fn name(&self) -> &str;
@@ -20,22 +18,24 @@ pub trait TacnodeGUC {
     fn generate(&self, dbname: &str) -> anyhow::Result<String>;
 }
 
-pub fn tacnode_guc_factory(name: &str, args: &serde_json::Value) -> anyhow::Result<Box<dyn TacnodeGUC>> {
+pub fn tacnode_guc_factory(
+    name: &str,
+    args: &serde_json::Value,
+) -> anyhow::Result<Box<dyn TacnodeGUC>> {
     let guc = match name {
         "experimental_query_history_config" => {
             QueryHistory::from_agent_args(args).map(|g| Box::new(g) as Box<dyn TacnodeGUC>)
-        },
+        }
         "experimental_show_hidden_catalog" => {
             HiddenCatalog::from_agent_args(args).map(|g| Box::new(g) as Box<dyn TacnodeGUC>)
-        },
+        }
         "experimental_enable_hidden_grammar" => {
             HiddenGrammar::from_agent_args(args).map(|g| Box::new(g) as Box<dyn TacnodeGUC>)
-        },
+        }
         "experimental_use_quick_optimizer_mode" => {
             UseQuickOptimizerMode::from_agent_args(args).map(|g| Box::new(g) as Box<dyn TacnodeGUC>)
-        },
+        }
         _ => bail!("Tacnode GUC type not recognized"),
-
     }?;
     Ok(guc)
 }
@@ -75,10 +75,18 @@ impl QueryHistory {
         }
     }
     pub fn from_agent_args(args: &serde_json::Value) -> anyhow::Result<Self> {
-        let params = args.get("params").and_then(Value::as_object).ok_or_else(|| anyhow::anyhow!("no params key"))?;
-        let log_threshold = params.get("log_threshold").and_then(Value::as_u64).ok_or_else(|| anyhow::anyhow!("No log threshold provided"))?;
+        let params = args
+            .get("params")
+            .and_then(Value::as_object)
+            .ok_or_else(|| anyhow::anyhow!("no params key"))?;
+        let log_threshold = params
+            .get("log_threshold")
+            .and_then(Value::as_u64)
+            .ok_or_else(|| anyhow::anyhow!("No log threshold provided"))?;
         let runtime_stats_enabled = params.get("runtime_stats_enabled").and_then(Value::as_i64);
-        let max_placeholder_threshold = params.get("max_placeholder_threshold").and_then(Value::as_i64);
+        let max_placeholder_threshold = params
+            .get("max_placeholder_threshold")
+            .and_then(Value::as_i64);
         Ok(Self::new(
             log_threshold,
             runtime_stats_enabled,
@@ -118,23 +126,26 @@ Controls query history collection behavior. Accepts a JSON object with the follo
     fn generate(&self, dbname: &str) -> anyhow::Result<String> {
         let settings = serde_json::to_string(self)?;
         if dbname.is_empty() {
-            Ok(format!("ALTER SYSTEM SET experimental_query_history_config={};", quote_literal(&settings)))
+            Ok(format!(
+                "ALTER SYSTEM SET experimental_query_history_config={};",
+                quote_literal(&settings)
+            ))
         } else {
-            Ok(format!("ALTER DATABASE {} SET experimental_query_history_config={};", quote_ident(dbname), quote_literal(&settings)))
+            Ok(format!(
+                "ALTER DATABASE {} SET experimental_query_history_config={};",
+                quote_ident(dbname),
+                quote_literal(&settings)
+            ))
         }
     }
-
-
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct HiddenCatalog {
-
-}
+pub struct HiddenCatalog {}
 impl HiddenCatalog {
-    pub fn from_agent_args(_args: &Value) ->  anyhow::Result<Self>{
-        Ok(Self{})
+    pub fn from_agent_args(_args: &Value) -> anyhow::Result<Self> {
+        Ok(Self {})
     }
 }
 
@@ -158,7 +169,6 @@ impl TacnodeGUC for HiddenCatalog {
         self.short()
     }
 
-
     fn generate(&self, _dbname: &str) -> anyhow::Result<String> {
         Ok(format!("SET {}=true;", self.name()))
     }
@@ -170,9 +180,8 @@ pub struct HiddenGrammar {}
 
 impl HiddenGrammar {
     pub fn from_agent_args(_args: &Value) -> anyhow::Result<Self> {
-        Ok(Self{})
+        Ok(Self {})
     }
-
 }
 impl TacnodeGUC for HiddenGrammar {
     fn name(&self) -> &str {
@@ -199,13 +208,11 @@ impl TacnodeGUC for HiddenGrammar {
     }
 }
 
-
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct UseQuickOptimizerMode{
+pub struct UseQuickOptimizerMode {
     mode: String,
 }
-
 
 impl UseQuickOptimizerMode {
     pub fn new(mode: String) -> Self {
@@ -213,7 +220,10 @@ impl UseQuickOptimizerMode {
     }
 
     pub fn from_agent_args(args: &Value) -> anyhow::Result<Self> {
-        let mode = args.get("mode").and_then(Value::as_str).ok_or_else(|| anyhow::anyhow!("no mode specified"))?;
+        let mode = args
+            .get("mode")
+            .and_then(Value::as_str)
+            .ok_or_else(|| anyhow::anyhow!("no mode specified"))?;
         Ok(Self::new(mode.to_owned()))
     }
 }
@@ -222,9 +232,15 @@ impl TacnodeGUC for UseQuickOptimizerMode {
     fn name(&self) -> &str {
         "experimental_use_quick_optimizer_mode"
     }
-    fn database_level(&self) -> bool {true}
-    fn system_level(&self) -> bool {false}
-    fn session_level(&self) -> bool {false}
+    fn database_level(&self) -> bool {
+        true
+    }
+    fn system_level(&self) -> bool {
+        false
+    }
+    fn session_level(&self) -> bool {
+        false
+    }
     fn short(&self) -> &'static str {
         "GUC experimental_use_quick_optimizer_mode: Use quick optimizer mode to reduce planning time at the cost of plan quality"
     }
@@ -232,20 +248,25 @@ impl TacnodeGUC for UseQuickOptimizerMode {
         return r##"GUC experimental_use_quick_optimizer_mode: Controls quick optimizer mode for this database, for system metadata queries. Optional mode can be
 - 'system' (default): enables quick optimizer, reduces planning time but may produce suboptimal plans.
 - 'off': disables quick optimizer, allows broader plan search and avoids full catalog scans
-"##
+"##;
     }
     fn generate(&self, dbname: &str) -> anyhow::Result<String> {
         if dbname.is_empty() {
-            bail!("GUC experimental_use_quick_optimizer_mode only support database_level, dbname is empty");
+            bail!(
+                "GUC experimental_use_quick_optimizer_mode only support database_level, dbname is empty"
+            );
         }
         let mode = match self.mode.as_str() {
             "off" => "off".to_string(),
             _ => quote_literal(&self.mode),
         };
-        Ok(format!("ALTER DATABASE {} SET experimental_use_quick_optimizer_mode={};", quote_ident(dbname), &mode))
+        Ok(format!(
+            "ALTER DATABASE {} SET experimental_use_quick_optimizer_mode={};",
+            quote_ident(dbname),
+            &mode
+        ))
     }
 }
-
 
 #[cfg(test)]
 mod tests {
